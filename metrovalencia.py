@@ -4,6 +4,21 @@ import argparse
 from unidecode import unidecode
 import re
 
+def edit_distance(s1, s2):
+    if len(s1) > len(s2):
+        s1, s2 = s2, s1
+
+    distances = range(len(s1) + 1)
+    for i2, c2 in enumerate(s2):
+        distances_ = [i2+1]
+        for i1, c1 in enumerate(s1):
+            if c1 == c2:
+                distances_.append(distances[i1])
+            else:
+                distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
+        distances = distances_
+    return distances[-1]
+
 def line_color(n):
     # Official line colors
     if n == 1: return (0xE4, 0xBE, 0x36)
@@ -102,6 +117,9 @@ if __name__ == "__main__":
                 selected_station = i
         if selected_station is None:
             print(f"No station named \"{args.station}\"")
+            best_match = min(stations.values(), key=lambda station: edit_distance(normalize_name(station["name"]), normalize_name(args.station)))
+            if edit_distance(normalize_name(best_match["name"]), normalize_name(args.station)) < len(args.station)*0.75:
+                print(f"Did you mean {best_match['name']}?")
             exit()
 
     while True:
